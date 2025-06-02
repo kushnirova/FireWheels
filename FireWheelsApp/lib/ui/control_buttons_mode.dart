@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/app_state.dart';
 
 class ControlButtonsMode extends StatelessWidget {
@@ -9,9 +8,9 @@ class ControlButtonsMode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = Provider.of<AppState>(context);
+    final frame = Provider.of<AppState>(context).frame;
     return Stack(
       children: [
-
 
         Align(
           alignment: Alignment.bottomCenter,
@@ -22,7 +21,11 @@ class ControlButtonsMode extends StatelessWidget {
               height: 137,
               child: ElevatedButton(
                 onPressed: () {
-                  // Tutaj można dodać funkcjonalność przycisku
+                  frame.setX(0);
+                  frame.setBit(0, true);
+                  frame.setY(0);
+                  print("=========SPEED ${state.speed}=====X ${frame.x}====Y ${frame.y}====K ${frame.buttons&32}=====B ${frame.buttons&1}==== BTN");
+                  print("STOP=================================B ${frame.buttons&1}======================= BTN");
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF2E00C6),
@@ -88,17 +91,29 @@ class ControlButtonsMode extends StatelessWidget {
           child: SizedBox(
             width: 57.0,
             height: 57.0,
-            child: FloatingActionButton(
-              onPressed: () {
-                // Tutaj możesz dodać akcję po naciśnięciu przycisku
+            child: GestureDetector(
+              onTapDown: (_) {
+                frame.setBit(3, true);
+                print("KRZYCZY======================================================================${frame.buttons&8}");
               },
-              backgroundColor: const Color(0xFF1C007A),
-              shape: const CircleBorder(),
-              child: Image.asset(
-                './images/klakson.jpg',
-                width: 40,
-                height: 40,
-                fit: BoxFit.contain,
+              onTapUp: (_) {
+                frame.setBit(3, false);
+                print("nie krzyczy======================================================================${frame.buttons&8}");
+              },
+              onTapCancel: () {
+                frame.setBit(3, false);
+                print("nie krzyczy======================================================================${frame.buttons&8}");
+              },
+              child: FloatingActionButton(
+                onPressed: () {},
+                backgroundColor: const Color(0xFF1C007A),
+                shape: const CircleBorder(),
+                child: Image.asset(
+                  './images/klakson.jpg',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),
@@ -113,7 +128,6 @@ class ControlButtonsMode extends StatelessWidget {
             child: FloatingActionButton(
               backgroundColor: state.driftOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
               onPressed: () => state.toggleDrift(),
-
               shape: const CircleBorder(),
               child: Image.asset(
                 state.driftOn ? './images/drift_on.jpg' : './images/drift.jpg',
@@ -133,7 +147,11 @@ class ControlButtonsMode extends StatelessWidget {
             height: 72.0,
             child: ElevatedButton(
               onPressed: () {
-                // Tutaj możesz dodać akcję po naciśnięciu przycisku
+                frame.setBit(0, false);
+                frame.setBit(5, false);
+                frame.setX(state.speed*10);
+
+                print("TYŁ======SPEED ${state.speed}====X ${frame.x}=====Y ${frame.y}=====K ${frame.buttons&32}=====B ${frame.buttons&1}== BTN");
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF00D21B),
@@ -160,7 +178,11 @@ class ControlButtonsMode extends StatelessWidget {
             height: 72.0,
             child: ElevatedButton(
               onPressed: () {
-                // Tutaj możesz dodać akcję po naciśnięciu przycisku
+                //state.unblock();
+                frame.setBit(0, false);
+                frame.setBit(5, true);
+                frame.setX(state.speed*10);
+                print("PRZÓD=========SPEED ${state.speed}=====X ${frame.x}====Y ${frame.y}====K ${frame.buttons&32}=====B ${frame.buttons&1}==== BTN");
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF00D21B),
@@ -185,22 +207,36 @@ class ControlButtonsMode extends StatelessWidget {
           child: SizedBox(
             width: 72.0,
             height: 72.0,
-            child: ElevatedButton(
-              onPressed: () {
-                // Tutaj możesz dodać akcję po naciśnięciu przycisku
+            child: GestureDetector(
+              onTapDown: (_) {
+                frame.setY(100);
+                print('PRAWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00D21B),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.0),
+              onTapUp: (_) {
+                frame.setY(0);
+                print('PRAWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
+              },
+              onTapCancel: () {
+                frame.setY(0);
+                print('PRAWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
+              },
+              child: ElevatedButton(
+                onPressed: () {
+                  frame.setY(-100);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00D21B),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  padding: EdgeInsets.zero,
                 ),
-                padding: EdgeInsets.zero,
-              ),
-              child: Image.asset(
-                './images/prawo.jpg',
-                width: 60,
-                height: 60,
-                fit: BoxFit.contain,
+                child: Image.asset(
+                  './images/prawo.jpg',
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),
@@ -212,22 +248,36 @@ class ControlButtonsMode extends StatelessWidget {
           child: SizedBox(
             width: 72.0,
             height: 72.0,
-            child: ElevatedButton(
-              onPressed: () {
-                // Tutaj możesz dodać akcję po naciśnięciu przycisku
+            child: GestureDetector(
+              onTapDown: (_) {
+                frame.setY(-100);
+                print('LEWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00D21B),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.0),
+              onTapUp: (_) {
+                frame.setY(0);
+                print('LEWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
+              },
+              onTapCancel: () {
+                frame.setY(0);
+                print('LEWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
+              },
+              child: ElevatedButton(
+                onPressed: () {
+                  frame.setY(-100);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00D21B),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  padding: EdgeInsets.zero,
                 ),
-                padding: EdgeInsets.zero,
-              ),
-              child: Image.asset(
-                './images/lewo.jpg',
-                width: 60,
-                height: 60,
-                fit: BoxFit.contain,
+                child: Image.asset(
+                  './images/lewo.jpg',
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),

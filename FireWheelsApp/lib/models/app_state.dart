@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../bluetooth/data_frame.dart';
 
 enum ControlMode { buttons, tilt }
 
@@ -14,6 +15,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  final DataFrame frame = DataFrame();
+
   bool _lightsOn = false;
   bool _hazardsOn = false;
   bool _driftOn = false;
@@ -25,22 +28,27 @@ class AppState extends ChangeNotifier {
   void toggleLights() {
     _lightsOn = !_lightsOn;
     notifyListeners();
+    frame.toggleBit(1);
   }
 
   void toggleHazards() {
     _hazardsOn = !_hazardsOn;
     notifyListeners();
+    frame.toggleBit(2);
   }
 
   void toggleDrift() {
     _driftOn = !_driftOn;
     notifyListeners();
+    frame.toggleBit(4);
   }
 
   void increaseSpeed() {
     if (_speed < 10) {
       _speed++;
       notifyListeners();
+      frame.setX(_speed*10);
+      print("speed ${_speed*10}===========================================================");
     }
   }
 
@@ -48,15 +56,24 @@ class AppState extends ChangeNotifier {
     if (_speed > 1) {
       _speed--;
       notifyListeners();
+      frame.setX(_speed*10);
     }
   }
 
-  void setSpeedFromTilt(double angle) {
-    final mapped = (angle.abs() * 10).clamp(1, 10).toInt();
-    if (_speed != mapped) {
-      _speed = mapped;
-      notifyListeners();
-    }
+  void unblock() {
+    frame.setBit(0, false);
+  }
+
+  void setSpeedFromTilt(int xAngle, int yAngle) {
+    if (_mode != ControlMode.tilt) return;
+
+    final newX = xAngle.clamp(-100, 100).toInt();
+    final newY = yAngle.clamp(-100, 100).toInt();
+
+    frame.x = newX;
+    frame.y = newY;
+    notifyListeners();
+    print("jedzie x ${frame.x}, y ${frame.y}=======   new x ${newX}, y ${newY}===============================");
   }
 }
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../models/app_state.dart';
 
 class ControlTiltMode extends StatelessWidget {
@@ -9,6 +8,7 @@ class ControlTiltMode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = Provider.of<AppState>(context);
+    final frame = Provider.of<AppState>(context).frame;
     return Stack(
       children: [
         Align(
@@ -20,7 +20,11 @@ class ControlTiltMode extends StatelessWidget {
               height: 137,
               child: ElevatedButton(
                 onPressed: () {
-                  // Tutaj można dodać funkcjonalność przycisku
+                  frame.setX_tilt(0);
+                  frame.setBit(0, true);
+                  frame.setY(0);
+                  print("=========SPEED ${state.speed}=====X ${frame.x}====Y ${frame.y}====K ${frame.buttons&32}=====B ${frame.buttons&1}==== BTN");
+                  print("STOP=================================B ${frame.buttons&1}======================= BTN");
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF2E00C6),
@@ -86,17 +90,30 @@ class ControlTiltMode extends StatelessWidget {
           child: SizedBox(
             width: 57.0,
             height: 57.0,
-            child: FloatingActionButton(
-              onPressed: () {
-                // Tutaj możesz dodać akcję po naciśnięciu przycisku
+            child: GestureDetector(
+              onTapDown: (_) {
+                frame.setBit(3, true);
+                print("KRZYCZY======================================================================");
+                print("x ${frame.x}, y ${frame.y}");
               },
-              backgroundColor: const Color(0xFF1C007A),
-              shape: const CircleBorder(),
-              child: Image.asset(
-                './images/klakson.jpg',
-                width: 40,
-                height: 40,
-                fit: BoxFit.contain,
+              onTapUp: (_) {
+                frame.setBit(3, false);
+                print("nie krzyczy======================================================================");
+              },
+              onTapCancel: () {
+                frame.setBit(3, false);
+                print("nie krzyczy======================================================================");
+              },
+              child: FloatingActionButton(
+                onPressed: () {},
+                backgroundColor: const Color(0xFF1C007A),
+                shape: const CircleBorder(),
+                child: Image.asset(
+                  './images/klakson.jpg',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),
@@ -111,7 +128,6 @@ class ControlTiltMode extends StatelessWidget {
             child: FloatingActionButton(
               backgroundColor: state.driftOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
               onPressed: () => state.toggleDrift(),
-
               shape: const CircleBorder(),
               child: Image.asset(
                 state.driftOn ? './images/drift_on.jpg' : './images/drift.jpg',
@@ -123,35 +139,6 @@ class ControlTiltMode extends StatelessWidget {
           ),
         ),
 
-        // Tył
-        Positioned( // przycisk tył
-          bottom: 30,
-          left: 30,
-          child: SizedBox(
-            width: 72.0,
-            height: 72.0,
-            child: ElevatedButton(
-              onPressed: () {
-                // Tutaj możesz dodać akcję po naciśnięciu przycisku
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00D21B),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-                padding: EdgeInsets.zero,
-              ),
-              child: Image.asset(
-                './images/tyl.jpg',
-                width: 60,
-                height: 60,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-        ),
-
-        // Przód
         Positioned( // przycisk przód
           bottom: 30,
           right: 30,
@@ -160,7 +147,11 @@ class ControlTiltMode extends StatelessWidget {
             height: 72.0,
             child: ElevatedButton(
               onPressed: () {
-                // Tutaj możesz dodać akcję po naciśnięciu przycisku
+                //state.unblock();
+                frame.setBit(0, false);
+                frame.setBit(5, true);
+                frame.setX(state.speed*10);
+                print("PRZÓD=========SPEED ${state.speed}=====X ${frame.x}====Y ${frame.y}====K ${frame.buttons&32}=====B ${frame.buttons&1}==== BTN");
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF00D21B),
@@ -179,19 +170,6 @@ class ControlTiltMode extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _circleButton(VoidCallback onPressed) {
-    return SizedBox(
-      width: 57.0,
-      height: 57.0,
-      child: FloatingActionButton(
-        onPressed: onPressed,
-        backgroundColor: const Color(0xFF1C007A),
-        shape: const CircleBorder(),
-        child: null,
-      ),
     );
   }
 }

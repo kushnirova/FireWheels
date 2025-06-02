@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import 'bluetooth/bluetooth_manager.dart';
+import 'bluetooth/data_sender.dart';
 import 'models/app_state.dart';
 import 'ui/control_header.dart';
 import 'ui/control_buttons_mode.dart';
@@ -22,6 +24,8 @@ void main() async {
       child: const MyApp(),
     ),
   );
+  BluetoothManager().start();
+  DataSender().startSending();
 }
 
 class MyApp extends StatelessWidget {
@@ -38,9 +42,12 @@ class MyApp extends StatelessWidget {
           child: Column(
             children: [
               const ControlHeader(),
+
               Expanded(
                 child: Consumer<AppState>(
                   builder: (context, state, _) {
+                    DataSender().setFrameProvider(() => state.frame);
+
                     return Stack(
                       children: [
                         state.mode == ControlMode.buttons
