@@ -1,21 +1,3 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
@@ -26,15 +8,12 @@
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 #include "nrf24l01p.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-/* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
 typedef enum {
     CONTROL_BLUETOOTH,
     CONTROL_NRF24L01
@@ -47,10 +26,8 @@ typedef struct {
     int8_t right_y;   // Bajt 4
     uint16_t buttons; // Bajty 5-6
 } ControllerData;
-/* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
 #define BUZZ_GPIO_Port GPIOB
 #define BUZZ_Pin GPIO_PIN_8
 #define BTSTATE_GPIO_Port GPIOB
@@ -92,30 +69,24 @@ typedef struct {
 #define NRF24L01P_IRQ_PIN_PORT GPIOB
 #define NRF24L01P_IRQ_PIN_NUMBER GPIO_PIN_0
 #define NRF24L01P_PAYLOAD_LENGTH 6
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-/* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN PV */
 ControlMode_t currentMode = CONTROL_NRF24L01;
 osMessageQueueId_t controlQueue;
 uint8_t rx_byte;
 uint8_t bt_rx_buffer[6];
 uint8_t bt_rx_index = 0;
+volatile uint32_t lastDataTime = 0; // Czas ostatniego odebranego pakietu
+ControllerData controlData = {0}; // Globalna struktura przechowująca dane sterujące
 
 #if USE_ULTRASONIC
 volatile uint32_t echo_start, echo_end;
 volatile uint8_t echo_flag = 0;
 #endif
-/* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
-/* USER CODE BEGIN PFP */
 void driveMotor(GPIO_TypeDef* IN1_Port, uint16_t IN1_Pin, GPIO_TypeDef* IN2_Port, uint16_t IN2_Pin, TIM_HandleTypeDef* htim, uint32_t Channel, int speed_percent);
 void SG90_SetAngle(uint8_t angle);
 float Battery_GetVoltage(void);
@@ -130,17 +101,14 @@ void StatusTask(void *pvParameters);
 #if USE_ULTRASONIC
 void UltrasonicTask(void *pvParameters);
 #endif
-/* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim1;
 extern SPI_HandleTypeDef hspi1;
 extern UART_HandleTypeDef huart1;
 extern ADC_HandleTypeDef hadc1;
-/* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
@@ -148,67 +116,28 @@ extern ADC_HandleTypeDef hadc1;
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_TIM2_Init();
   MX_TIM4_Init();
   MX_USART1_UART_Init();
   MX_ADC1_Init();
-  /* USER CODE BEGIN 2 */
   #if USE_ULTRASONIC
     MX_TIM1_Init();
   #endif
-  /* USER CODE END 2 */
-//    sendCommand("AT+ENAT\r\n");
-//          HAL_Delay(500);
-//    sendCommand("AT+RDEF\r\n");
-//      HAL_Delay(500);
-//      sendCommand("AT+ENAT\r\n");
-//               HAL_Delay(500);
-//      sendCommand("AT+SPOF\r\n");
-//      HAL_Delay(500);
-//
-//      sendCommand("AT+LENAFireWheels\r\n");
-//      HAL_Delay(500);
-//      sendCommand("AT+SPNAFireWheels\r\n");
-//      HAL_Delay(500);
-//
-//
-//      sendCommand("AT+EXAT\r\n");
-//      HAL_Delay(500);
-  /* Initialize CMSIS-RTOS */
 
-
-  /* Call init function for freertos objects */
-  MX_FREERTOS_Init();
-
-  /* USER CODE BEGIN WHILE */
   nrf24l01p_rx_init(2402, 0);
 
   controlQueue = osMessageQueueNew(30, sizeof(ControllerData), NULL);
   const osThreadAttr_t controlTask_attr = {
       .name = "ControlTask",
       .priority = osPriorityHigh,
-      .stack_size = 1024  // domyślnie 512
+      .stack_size = 1024
   };
   osThreadNew(ControlTask, NULL, &controlTask_attr);
-  //osThreadNew(BatteryTask, NULL, NULL);
   osThreadNew(ButtonTask, NULL, NULL);
   osThreadNew(StatusTask, NULL, NULL);
   #if USE_ULTRASONIC
@@ -228,43 +157,57 @@ int main(void)
   driveMotor(M4IN1_GPIO_Port, M4IN1_Pin, M4IN2_GPIO_Port, M4IN2_Pin, &htim2, TIM_CHANNEL_4, 0);
   SG90_SetAngle(90);
 
-
-
   osKernelInitialize();
   osKernelStart();
 
   while (1)
   {
-    /* USER CODE END WHILE */
-    /* USER CODE BEGIN 3 */
   }
-  /* USER CODE END 3 */
 }
 
 void ControlTask(void *pvParameters) {
     ControllerData data;
     while (1) {
-        if (osMessageQueueGet(controlQueue, &data, NULL, osWaitForever) == osOK) {
-            int speed = data.left_y;
-            int angle = (data.right_x + 100) * 180 / 200;
+        // Sprawdź, czy minęło 100 ms od ostatniego pakietu
+        if (HAL_GetTick() - lastDataTime > 100) {
+            // Zeruj controlData i zatrzymaj silniki
+            controlData.left_x = 0;
+            controlData.left_y = 0;
+            controlData.right_x = 0;
+            controlData.right_y = 0;
+            controlData.buttons = 0;
+            SG90_SetAngle(90); // Ustaw serwo na pozycję neutralną
+            driveMotor(M1IN1_GPIO_Port, M1IN1_Pin, M1IN2_GPIO_Port, M1IN2_Pin, &htim2, TIM_CHANNEL_1, 0);
+            driveMotor(M2IN1_GPIO_Port, M2IN1_Pin, M2IN2_GPIO_Port, M2IN2_Pin, &htim2, TIM_CHANNEL_2, 0);
+            driveMotor(M3IN1_GPIO_Port, M3IN1_Pin, M3IN2_GPIO_Port, M3IN2_Pin, &htim2, TIM_CHANNEL_3, 0);
+            driveMotor(M4IN1_GPIO_Port, M4IN1_Pin, M4IN2_GPIO_Port, M4IN2_Pin, &htim2, TIM_CHANNEL_4, 0);
+            LED_Brake(1); // Włącz światła stopu
+            LED_Front(0); // Wyłącz światła przednie
+            HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, GPIO_PIN_RESET); // Wyłącz buzzer
+        }
 
-//            if (Battery_GetVoltage() >= 2.0f) {
-                SG90_SetAngle((uint8_t)angle);
-                driveMotor(M1IN1_GPIO_Port, M1IN1_Pin, M1IN2_GPIO_Port, M1IN2_Pin, &htim2, TIM_CHANNEL_1, speed*-1);
-                driveMotor(M2IN1_GPIO_Port, M2IN1_Pin, M2IN2_GPIO_Port, M2IN2_Pin, &htim2, TIM_CHANNEL_2, speed*-1);
-                driveMotor(M3IN1_GPIO_Port, M3IN1_Pin, M3IN2_GPIO_Port, M3IN2_Pin, &htim2, TIM_CHANNEL_3, speed);
-                driveMotor(M4IN1_GPIO_Port, M4IN1_Pin, M4IN2_GPIO_Port, M4IN2_Pin, &htim2, TIM_CHANNEL_4, speed);
-//            } else {
-//                driveMotor(M1IN1_GPIO_Port, M1IN1_Pin, M1IN2_GPIO_Port, M1IN2_Pin, &htim2, TIM_CHANNEL_1, 0);
-//                driveMotor(M2IN1_GPIO_Port, M2IN1_Pin, M2IN2_GPIO_Port, M2IN2_Pin, &htim2, TIM_CHANNEL_2, 0);
-//                driveMotor(M3IN1_GPIO_Port, M3IN1_Pin, M3IN2_GPIO_Port, M3IN2_Pin, &htim2, TIM_CHANNEL_3, 0);
-//                driveMotor(M4IN1_GPIO_Port, M4IN1_Pin, M4IN2_GPIO_Port, M4IN2_Pin, &htim2, TIM_CHANNEL_4, 0);
-//            }
+        // Czekaj na nowy pakiet z kolejki
+        if (osMessageQueueGet(controlQueue, &data, NULL, 0) == osOK) {
+            // Aktualizuj controlData
+            controlData = data;
+            lastDataTime = HAL_GetTick();
+
+            // Sterowanie robotem
+            int speed = controlData.left_y;
+            int angle = (controlData.right_x + 100) * 180 / 200;
+
+            SG90_SetAngle((uint8_t)angle);
+            driveMotor(M1IN1_GPIO_Port, M1IN1_Pin, M1IN2_GPIO_Port, M1IN2_Pin, &htim2, TIM_CHANNEL_1, speed * -1);
+            driveMotor(M2IN1_GPIO_Port, M2IN1_Pin, M2IN2_GPIO_Port, M2IN2_Pin, &htim2, TIM_CHANNEL_2, speed * -1);
+            driveMotor(M3IN1_GPIO_Port, M3IN1_Pin, M3IN2_GPIO_Port, M3IN2_Pin, &htim2, TIM_CHANNEL_3, speed);
+            driveMotor(M4IN1_GPIO_Port, M4IN1_Pin, M4IN2_GPIO_Port, M4IN2_Pin, &htim2, TIM_CHANNEL_4, speed);
 
             LED_Brake(speed <= 0 ? 1 : 0);
-            LED_Front(data.buttons & 0x01 ? 1 : 0);
-            HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, (data.buttons & 0x02) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+            LED_Front(controlData.buttons & 0x01 ? 1 : 0);
+            HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, (controlData.buttons & 0x02) ? GPIO_PIN_SET : GPIO_PIN_RESET);
         }
+
+        osDelay(10); // Krótkie opóźnienie, aby nie obciążać procesora
     }
 }
 
@@ -314,14 +257,15 @@ void ButtonTask(void *pvParameters) {
 void StatusTask(void *pvParameters) {
     while (1) {
         if (currentMode == CONTROL_BLUETOOTH) {
-			LED_Signal(1);
-			osDelay(500);
-			LED_Signal(0);
-			osDelay(500);
-        } else if(currentMode == CONTROL_NRF24L01) {
+            LED_Signal(1);
+            osDelay(500);
+            LED_Signal(0);
+            osDelay(500);
+        } else if (currentMode == CONTROL_NRF24L01) {
             LED_Signal(1);
             osDelay(1000);
         }
+        osDelay(10);
     }
 }
 
@@ -365,14 +309,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
         ControllerData data;
         nrf24l01p_rx_receive((uint8_t*)&data);
 
-        // Sprawdź, ile jest miejsca w kolejce
         if (osMessageQueueGetSpace(controlQueue) == 0) {
-            // Kolejka pełna — usuń najstarszy element
             ControllerData dummy;
-            osMessageQueueGet(controlQueue, &dummy, NULL, 0);  // usunięcie bez oczekiwania
+            osMessageQueueGet(controlQueue, &dummy, NULL, 0);
         }
 
-        // Wstaw nowy pakiet
+        lastDataTime = HAL_GetTick();
         osMessageQueuePut(controlQueue, &data, 0, 0);
     }
 }
@@ -383,6 +325,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         if (bt_rx_index >= 6) {
             ControllerData data;
             memcpy(&data, bt_rx_buffer, 6);
+            lastDataTime = HAL_GetTick();
             osMessageQueuePut(controlQueue, &data, 0, 0);
             bt_rx_index = 0;
         }
@@ -401,20 +344,18 @@ void driveMotor(GPIO_TypeDef* IN1_Port, uint16_t IN1_Pin, GPIO_TypeDef* IN2_Port
         HAL_GPIO_WritePin(IN1_Port, IN1_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(IN2_Port, IN2_Pin, GPIO_PIN_RESET);
     }
-    //uint32_t duty = (abs(speed_percent) * htim->Init.Period) / 100;
-    if(speed_percent > 100){
-    	speed_percent = 100;
+    if (speed_percent > 100) {
+        speed_percent = 100;
     }
-    if(speed_percent < -100){
-    	speed_percent = -100;
+    if (speed_percent < -100) {
+        speed_percent = -100;
     }
     __HAL_TIM_SET_COMPARE(htim, Channel, abs(speed_percent));
 }
 
 void SG90_SetAngle(uint8_t angle) {
-    //uint32_t ccr_value = 1000 + (angle * 1000 / 180);
-	uint32_t ccr_value = 500 + (angle * 2000 / 180); // Skalowanie z 0,5 ms do 2,5 ms_
-	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_4, ccr_value);
+    uint32_t ccr_value = 500 + (angle * 2000 / 180);
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_4, ccr_value);
 }
 
 float Battery_GetVoltage(void) {
@@ -480,9 +421,6 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 }
-
-/* USER CODE BEGIN 4 */
-/* USER CODE END 4 */
 
 /**
   * @brief  Period elapsed callback in non blocking mode
