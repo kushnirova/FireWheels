@@ -16,7 +16,7 @@ FireWheels to dynamiczny, czterokołowy robot mobilny, stworzony do szybkiej jaz
 
 ## 📸 Multimedia
 
-- **Zdjęcia:** Zobacz naszego FireWheels w akcji! [link do folderu ze zdjęciami zostanie dodany później]
+- **Zdjęcia:** Zobacz naszego FireWheels w akcji! [photos](https://github.com/kushnirova/FireWheels/tree/main/photos)
 - **Wideo:** Nagrania z testów i prezentacji możliwości robota: [link zostanie dodany później]
 
 ---
