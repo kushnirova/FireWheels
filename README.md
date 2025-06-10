@@ -10,14 +10,14 @@
 
 ## ⚙️ Opis projektu
 
-FireWheels to dynamiczny, czterokołowy robot mobilny, stworzony do szybkiej jazdy i kontrolowanych poślizgów. Wykorzystuje układ kierowniczy Ackermanna napędzany serwomechanizmem. Komunikacja odbywa się bezprzewodowo przez Bluetooth, możliwa jest również implementacja sterowania radiowego 2.4 GHz. Robot wyposażony jest w ultradźwiękowe czujniki odległości do wykrywania przeszkód, sygnalizacyjne diody LED oraz klakson/dodatkowy serwomechanizm. Sterowanie odbywa się za pomocą aplikacji mobilnej, a w przypadku wykrycia przeszkody pojazd automatycznie zahamuje.
+FireWheels to dynamiczny, czterokołowy robot mobilny, stworzony do szybkiej jazdy i kontrolowanych poślizgów. Napęd jest realizowany na każde z kół. Wykorzystuje układ kierowniczy Ackermanna napędzany serwomechanizmem. Komunikacja odbywa się bezprzewodowo przez Bluetooth, możliwe jest również sterowanie radiowe 2.4 GHz. Robot wyposażony jest w sygnalizacyjne diody LED oraz klakson/dodatkowy serwomechanizm. Sterowanie jest możliwe w dwóch trybach: za pomocą aplikacji mobilnej (Bluetooth) lub kontrolera bezprzewodowego (nRF). Robot został zaprogramowany za pomocą technologii FreeRTOS w STM32CubeIDE. Aplikacja mobilna napisana w Flutter (Dart) przy użyciu Android Studio.
 
 ---
 
 ## 📸 Multimedia
 
 - **Zdjęcia:** Zobacz naszego FireWheels w akcji! [link do folderu ze zdjęciami zostanie dodany później]
-- **Wideo:** Nagrania z testów i prezentacji możliwości robota: [link do youtube zostanie dodany później]
+- **Wideo:** Nagrania z testów i prezentacji możliwości robota: [link zostanie dodany później]
 
 ---
 
@@ -30,7 +30,6 @@ FireWheels to dynamiczny, czterokołowy robot mobilny, stworzony do szybkiej jaz
 - **Język programowania:** C
 - **Sterowanie silnikami:** Toshiba TB6612FNG x2
 - **Serwomechanizm:** SG90
-- **Czujniki:** Ultradźwiękowe czujniki odległości HC-SR04 (x2, opcjonalnie)
 - **Komunikacja:** Moduł Bluetooth VG6328A/HC-04, moduł radiowy nRF24L01+PA+LNA 2.4 GHz
 - **Zasilanie:** Akumulator Li-Ion 3.7V 18650 (2s)
 - **Elementy dodatkowe:**
@@ -40,22 +39,9 @@ FireWheels to dynamiczny, czterokołowy robot mobilny, stworzony do szybkiej jaz
 ### Aplikacja Mobilna 📱
 
 - **Platforma:** Android & iOS
-- **Język programowania:** Flutter
+- **Język programowania:** Dart (Flutter)
 - **Narzędzia:** Android Studio
 - **Komunikacja:** Bluetooth
-
----
-
-## 📚 Struktura repozytorium i dokumentacja
-
-[jak coś się pojawi to damy]
-
----
-
-## 📖 Instrukcja obsługi
-
-- **Robot:** Instrukcja obsługi robota i aplikacji znajduje się tutaj: [link do Docs zostanie dodany później]
-- **Aplikacja Mobilna:** [link na googleplay zostanie dodany później]
 
 ---
 
@@ -63,11 +49,10 @@ FireWheels to dynamiczny, czterokołowy robot mobilny, stworzony do szybkiej jaz
 
 Postępy w poszczególnych obszarach projektu:
 
-- **Projektowanie schematów:** [link do Docs zostanie dodany później]
-- **Projektowanie obudowy:** [link do Docs zostanie dodany później]
-- **Oprogramowanie robota:** [link do Docs zostanie dodany później]
-- **Oprogramowanie aplikacji mobilnej:** [link do Docs zostanie dodany później]
-- **Lista użytych elementów:** [link do Docs zostanie dodany później]
+- **Projektowanie schematów:** [schematic_pcb](https://github.com/kushnirova/FireWheels/tree/main/schematic_pcb)
+- **Projektowanie obudowy:** [3d_models](https://github.com/kushnirova/FireWheels/tree/main/3d_models)
+- **Oprogramowanie robota i mikrokontrolera:** [firmware](https://github.com/kushnirova/FireWheels/tree/main/firmware/FireWheels)
+- **Oprogramowanie aplikacji mobilnej:** [FireWheelsApp](https://github.com/kushnirova/FireWheels/tree/main/FireWheelsApp)
 
 ---
 
