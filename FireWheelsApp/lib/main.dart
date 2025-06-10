@@ -21,11 +21,12 @@ void main() async {
   runApp(
     ChangeNotifierProvider(
       create: (_) => AppState(),
-      child: const MyApp(),
+      child: DataSenderWrapper( // <- CZY TU JEST WRAPPER?
+        child: MyApp(),
+      ),
     ),
   );
   BluetoothManager().start();
-  DataSender().startSending();
 }
 
 class MyApp extends StatelessWidget {
@@ -36,7 +37,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'FireWheels',
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
+        home: DataSenderWrapper(
+        child: Scaffold(
         backgroundColor: const Color(0xFF140030),
         body: SafeArea(
           child: Column(
@@ -46,8 +48,6 @@ class MyApp extends StatelessWidget {
               Expanded(
                 child: Consumer<AppState>(
                   builder: (context, state, _) {
-                    DataSender().setFrameProvider(() => state.frame);
-
                     return Stack(
                       children: [
                         state.mode == ControlMode.buttons
@@ -63,6 +63,39 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
+  }
+}
+
+class DataSenderWrapper extends StatefulWidget {
+  final Widget child;
+  const DataSenderWrapper({super.key, required this.child});
+
+  @override
+  State<DataSenderWrapper> createState() => _DataSenderWrapperState();
+}
+
+class _DataSenderWrapperState extends State<DataSenderWrapper> {
+  @override
+  void initState() {
+    super.initState();
+
+    // Poczekaj aż context będzie dostępny
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      DataSender().attachContext(context);
+      DataSender().startSending();
+    });
+  }
+
+  @override
+  void dispose() {
+    DataSender().stopSending();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }

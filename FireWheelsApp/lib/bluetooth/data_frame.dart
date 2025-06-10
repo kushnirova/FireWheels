@@ -17,8 +17,16 @@ class DataFrame {
   // 5 - kierunek
   int buttons = 0x21; // przyblokowany i do przodu
 
-  Uint8List toBytes() {
-    return Uint8List.fromList([
+  DataFrame clone() {
+    final copy = DataFrame();
+    copy.x = x;
+    copy.y = y;
+    copy.buttons = buttons;
+    return copy;
+  }
+
+  Int8List toBytes() {
+    return Int8List.fromList([
       x.toSigned(8),        // bajt 1: X
       y.toSigned(8),        // bajt 2: Y
       reserved3,            // bajt 3: 0
@@ -27,6 +35,7 @@ class DataFrame {
       reserved6,            // bajt 6: 0
     ]);
   }
+
 
   // Ustawia bit o danym indeksie na 1 lub 0
   void setBit(int bitIndex, bool value) {
@@ -72,8 +81,8 @@ class DataFrame {
   // Zmiana Y
   void setY(int a) {
     if (buttons & 1 == 0) {
-      y = a.toSigned(8);
-      if (a.abs()>=10) y = a.toSigned(8);
+      y = -a.toSigned(8);
+      if (a.abs()>=10) y = -a.toSigned(8);
     }
   }
 

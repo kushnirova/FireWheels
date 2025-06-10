@@ -7,25 +7,26 @@ class ControlButtonsMode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<AppState>(context);
-    final frame = Provider.of<AppState>(context).frame;
+    final appState = Provider.of<AppState>(context, listen: false);
     return Stack(
       children: [
-
         Align(
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.only(bottom: 30.0),
-            child: SizedBox( // przycisk STOP
+            child: SizedBox(
               width: 137,
               height: 137,
               child: ElevatedButton(
                 onPressed: () {
-                  frame.setX(0);
-                  frame.setBit(0, true);
-                  frame.setY(0);
-                  print("=========SPEED ${state.speed}=====X ${frame.x}====Y ${frame.y}====K ${frame.buttons&32}=====B ${frame.buttons&1}==== BTN");
-                  print("STOP=================================B ${frame.buttons&1}======================= BTN");
+                  final newFrame = appState.frameNotifier.value.clone();
+                  newFrame.setX(0);
+                  newFrame.setBit(0, true);
+                  newFrame.setY(0);
+                  appState.frameNotifier.value = newFrame;
+                  appState.notifyListeners();
+                  print("=========SPEED ${appState.speed}=====X ${newFrame.x}====Y ${newFrame.y}====K ${newFrame.buttons & 32}=====B ${newFrame.buttons & 1}==== BTN");
+                  print("STOP=================================B ${newFrame.buttons & 1}======================= BTN");
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF2E00C6),
@@ -45,18 +46,18 @@ class ControlButtonsMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk światła
+        Positioned(
           top: 0,
           left: 30.0,
           child: SizedBox(
             width: 57.0,
             height: 57.0,
             child: FloatingActionButton(
-              backgroundColor: state.lightsOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
-              onPressed: () => state.toggleLights(),
+              backgroundColor: appState.lightsOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
+              onPressed: () => appState.toggleLights(),
               shape: const CircleBorder(),
               child: Image.asset(
-                state.lightsOn ? './images/swiatla_on.jpg' : './images/swiatla.jpg',
+                appState.lightsOn ? './images/swiatla_on.jpg' : './images/swiatla.jpg',
                 width: 40,
                 height: 40,
                 fit: BoxFit.contain,
@@ -65,18 +66,18 @@ class ControlButtonsMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk awaryjne
+        Positioned(
           top: 72.0,
           left: 30.0,
           child: SizedBox(
             width: 57.0,
             height: 57.0,
             child: FloatingActionButton(
-              backgroundColor: state.hazardsOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
-              onPressed: () => state.toggleHazards(),
+              backgroundColor: appState.hazardsOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
+              onPressed: () => appState.toggleHazards(),
               shape: const CircleBorder(),
               child: Image.asset(
-                state.hazardsOn ? './images/awaryjne_on.jpg' : './images/awaryjne.jpg',
+                appState.hazardsOn ? './images/awaryjne_on.jpg' : './images/awaryjne.jpg',
                 width: 40,
                 height: 40,
                 fit: BoxFit.contain,
@@ -85,7 +86,7 @@ class ControlButtonsMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk klakson
+        Positioned(
           top: 0.0,
           right: 30.0,
           child: SizedBox(
@@ -93,16 +94,25 @@ class ControlButtonsMode extends StatelessWidget {
             height: 57.0,
             child: GestureDetector(
               onTapDown: (_) {
-                frame.setBit(3, true);
-                print("KRZYCZY======================================================================${frame.buttons&8}");
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setBit(3, true);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print("KRZYCZY======================================================================${newFrame.buttons & 8}");
               },
               onTapUp: (_) {
-                frame.setBit(3, false);
-                print("nie krzyczy======================================================================${frame.buttons&8}");
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setBit(3, false);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print("nie krzyczy======================================================================${newFrame.buttons & 8}");
               },
               onTapCancel: () {
-                frame.setBit(3, false);
-                print("nie krzyczy======================================================================${frame.buttons&8}");
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setBit(3, false);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print("nie krzyczy======================================================================${newFrame.buttons & 8}");
               },
               child: FloatingActionButton(
                 onPressed: () {},
@@ -119,18 +129,18 @@ class ControlButtonsMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk drift
+        Positioned(
           top: 72.0,
           right: 30.0,
           child: SizedBox(
             width: 57.0,
             height: 57.0,
             child: FloatingActionButton(
-              backgroundColor: state.driftOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
-              onPressed: () => state.toggleDrift(),
+              backgroundColor: appState.driftOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
+              onPressed: () => appState.toggleDrift(),
               shape: const CircleBorder(),
               child: Image.asset(
-                state.driftOn ? './images/drift_on.jpg' : './images/drift.jpg',
+                appState.driftOn ? './images/drift_on.jpg' : './images/drift.jpg',
                 width: 40,
                 height: 40,
                 fit: BoxFit.contain,
@@ -139,7 +149,7 @@ class ControlButtonsMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk tył
+        Positioned(
           bottom: 30,
           left: 30,
           child: SizedBox(
@@ -147,11 +157,13 @@ class ControlButtonsMode extends StatelessWidget {
             height: 72.0,
             child: ElevatedButton(
               onPressed: () {
-                frame.setBit(0, false);
-                frame.setBit(5, false);
-                frame.setX(state.speed*10);
-
-                print("TYŁ======SPEED ${state.speed}====X ${frame.x}=====Y ${frame.y}=====K ${frame.buttons&32}=====B ${frame.buttons&1}== BTN");
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setBit(0, false);
+                newFrame.setBit(5, false);
+                newFrame.setX(appState.speed * 10);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print("TYŁ======SPEED ${appState.speed}====X ${newFrame.x}=====Y ${newFrame.y}=====K ${newFrame.buttons & 32}=====B ${newFrame.buttons & 1}== BTN");
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF00D21B),
@@ -170,7 +182,7 @@ class ControlButtonsMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk przód
+        Positioned(
           bottom: 30,
           right: 30,
           child: SizedBox(
@@ -178,11 +190,13 @@ class ControlButtonsMode extends StatelessWidget {
             height: 72.0,
             child: ElevatedButton(
               onPressed: () {
-                //state.unblock();
-                frame.setBit(0, false);
-                frame.setBit(5, true);
-                frame.setX(state.speed*10);
-                print("PRZÓD=========SPEED ${state.speed}=====X ${frame.x}====Y ${frame.y}====K ${frame.buttons&32}=====B ${frame.buttons&1}==== BTN");
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setBit(0, false);
+                newFrame.setBit(5, true);
+                newFrame.setX(appState.speed * 10);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print("PRZÓD=========SPEED ${appState.speed}=====X ${newFrame.x}====Y ${newFrame.y}====K ${newFrame.buttons & 32}=====B ${newFrame.buttons & 1}==== BTN");
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF00D21B),
@@ -201,7 +215,7 @@ class ControlButtonsMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk prawo
+        Positioned(
           bottom: 95,
           right: 200,
           child: SizedBox(
@@ -209,21 +223,28 @@ class ControlButtonsMode extends StatelessWidget {
             height: 72.0,
             child: GestureDetector(
               onTapDown: (_) {
-                frame.setY(100);
-                print('PRAWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setY(100);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print('PRAWO=========SPEED ${appState.speed}========X ${newFrame.x}==========Y ${newFrame.y}================ BTN');
               },
               onTapUp: (_) {
-                frame.setY(0);
-                print('PRAWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setY(0);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print('PRAWO=========SPEED ${appState.speed}========X ${newFrame.x}==========Y ${newFrame.y}================ BTN');
               },
               onTapCancel: () {
-                frame.setY(0);
-                print('PRAWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setY(0);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print('PRAWO=========SPEED ${appState.speed}========X ${newFrame.x}==========Y ${newFrame.y}================ BTN');
               },
               child: ElevatedButton(
-                onPressed: () {
-                  frame.setY(-100);
-                },
+                onPressed: () {},
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF00D21B),
                   shape: RoundedRectangleBorder(
@@ -242,7 +263,7 @@ class ControlButtonsMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk lewo
+        Positioned(
           bottom: 95,
           left: 200,
           child: SizedBox(
@@ -250,21 +271,28 @@ class ControlButtonsMode extends StatelessWidget {
             height: 72.0,
             child: GestureDetector(
               onTapDown: (_) {
-                frame.setY(-100);
-                print('LEWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setY(-100);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print('LEWO=========SPEED ${appState.speed}========X ${newFrame.x}==========Y ${newFrame.y}================ BTN');
               },
               onTapUp: (_) {
-                frame.setY(0);
-                print('LEWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setY(0);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print('LEWO=========SPEED ${appState.speed}========X ${newFrame.x}==========Y ${newFrame.y}================ BTN');
               },
               onTapCancel: () {
-                frame.setY(0);
-                print('LEWO=========SPEED ${state.speed}========X ${frame.x}==========Y ${frame.y}================ BTN');
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setY(0);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print('LEWO=========SPEED ${appState.speed}========X ${newFrame.x}==========Y ${newFrame.y}================ BTN');
               },
               child: ElevatedButton(
-                onPressed: () {
-                  frame.setY(-100);
-                },
+                onPressed: () {},
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF00D21B),
                   shape: RoundedRectangleBorder(
@@ -283,14 +311,14 @@ class ControlButtonsMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk plus
+        Positioned(
           top: 65,
           right: 280,
           child: SizedBox(
             width: 48.0,
             height: 48.0,
             child: ElevatedButton(
-              onPressed: () => state.increaseSpeed(),
+              onPressed: () => appState.increaseSpeed(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF00D21B),
                 shape: RoundedRectangleBorder(
@@ -308,14 +336,14 @@ class ControlButtonsMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk minus
+        Positioned(
           top: 65,
           left: 280,
           child: SizedBox(
             width: 48.0,
             height: 48.0,
             child: ElevatedButton(
-              onPressed: () => state.decreaseSpeed(),
+              onPressed: () => appState.decreaseSpeed(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF00D21B),
                 shape: RoundedRectangleBorder(

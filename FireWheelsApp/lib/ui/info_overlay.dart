@@ -24,17 +24,16 @@ class _InfoOverlayState extends State<InfoOverlay> {
     _accelerometerSub = accelerometerEvents.listen((event) {
       setState(() {
         final appState = Provider.of<AppState>(context, listen: false);
-        final frame = Provider.of<AppState>(context, listen: false).frame;
-        if(frame.buttons & 32 == 32) {
+        final newFrame = appState.frameNotifier.value.clone();
+        if (newFrame.buttons & 32 == 32) {
           x = -event.x;
           y = event.y;
-        }
-        else {
+        } else {
           x = 0;
           y = 0;
         }
-        a = x*10;
-        b = y*10;
+        a = x * 10;
+        b = y * 10;
         appState.setSpeedFromTilt(a.clamp(-100, 100).toInt(), b.clamp(-100, 100).toInt());
       });
     });
@@ -47,11 +46,11 @@ class _InfoOverlayState extends State<InfoOverlay> {
   }
 
   int getX() {
-    return (x*10).toInt();
+    return (x * 10).toInt();
   }
 
   int getY() {
-    return (y*10).toInt();
+    return (y * 10).toInt();
   }
 
   @override
@@ -72,9 +71,7 @@ class _InfoOverlayState extends State<InfoOverlay> {
           ),
         ),
       );
-    }
-
-    else {
+    } else {
       return const SizedBox.shrink();
     }
   }

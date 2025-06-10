@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../bluetooth/data_frame.dart';
 
 enum ControlMode { buttons, tilt }
@@ -15,7 +16,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  final DataFrame frame = DataFrame();
+  final ValueNotifier<DataFrame> frameNotifier = ValueNotifier(DataFrame());
 
   bool _lightsOn = false;
   bool _hazardsOn = false;
@@ -27,53 +28,74 @@ class AppState extends ChangeNotifier {
 
   void toggleLights() {
     _lightsOn = !_lightsOn;
+    final newFrame = frameNotifier.value.clone();
+    newFrame.toggleBit(1);
+    frameNotifier.value = newFrame;
     notifyListeners();
-    frame.toggleBit(1);
   }
 
   void toggleHazards() {
     _hazardsOn = !_hazardsOn;
+    final newFrame = frameNotifier.value.clone();
+    newFrame.toggleBit(2);
+    frameNotifier.value = newFrame;
     notifyListeners();
-    frame.toggleBit(2);
   }
 
   void toggleDrift() {
     _driftOn = !_driftOn;
+    final newFrame = frameNotifier.value.clone();
+    newFrame.toggleBit(4);
+    frameNotifier.value = newFrame;
     notifyListeners();
-    frame.toggleBit(4);
   }
 
   void increaseSpeed() {
     if (_speed < 10) {
       _speed++;
+      final newFrame = frameNotifier.value.clone();
+      newFrame.setX(_speed * 10);
+      frameNotifier.value = newFrame;
       notifyListeners();
-      frame.setX(_speed*10);
-      print("speed ${_speed*10}===========================================================");
+      print("speed ${_speed * 10}===========================================================");
     }
   }
 
   void decreaseSpeed() {
     if (_speed > 1) {
       _speed--;
+      final newFrame = frameNotifier.value.clone();
+      newFrame.setX(_speed * 10);
+      frameNotifier.value = newFrame;
       notifyListeners();
-      frame.setX(_speed*10);
     }
   }
 
   void unblock() {
-    frame.setBit(0, false);
+    final newFrame = frameNotifier.value.clone();
+    newFrame.setBit(0, false);
+    frameNotifier.value = newFrame;
+    notifyListeners();
   }
 
   void setSpeedFromTilt(int xAngle, int yAngle) {
     if (_mode != ControlMode.tilt) return;
-
     final newX = xAngle.clamp(-100, 100).toInt();
     final newY = yAngle.clamp(-100, 100).toInt();
-
-    frame.x = newX;
-    frame.y = newY;
+    final newFrame = frameNotifier.value.clone();
+    newFrame.x = newX;
+    newFrame.y = newY;
+    frameNotifier.value = newFrame;
     notifyListeners();
-    print("jedzie x ${frame.x}, y ${frame.y}=======   new x ${newX}, y ${newY}===============================");
+    print("jedzie x ${newFrame.x}, y ${newFrame.y}======= new x ${newX}, y ${newY}===============================");
+  }
+
+  void updateFrame(DataFrame newFrame) {
+    frameNotifier.value = newFrame.clone();
+    notifyListeners();
+  }
+
+  static AppState of(BuildContext context) {
+    return Provider.of<AppState>(context, listen: false);
   }
 }
-

@@ -25,7 +25,7 @@ class _ConnectionStatusDotState extends State<ConnectionStatusDot> {
       builder: (context, snapshot) {
         Color color;
         if (_bt.isReady) {
-          color = Colors.green;
+          color = Color(0xFF00D21B);
         }
         else {
           color = Colors.red;

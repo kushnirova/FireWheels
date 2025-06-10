@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+// import 'dart:nativewrappers/_internal/vm/lib/typed_data_patch.dart';
+import 'dart:typed_data';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class BluetoothManager {
@@ -7,44 +9,53 @@ class BluetoothManager {
   factory BluetoothManager() => _instance;
   BluetoothManager._internal();
 
- final String targetDeviceName = "FireWheels";
+ final String targetDeviceName = "Fire Wheels";
   BluetoothDevice? _device;
   BluetoothCharacteristic? _writeChar;
 
   Future<void> start() async {
     print("🔍 Rozpoczynanie skanowania...");
-    FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
+    FlutterBluePlus.startScan(timeout: const Duration(seconds: 15));
 
     FlutterBluePlus.scanResults.listen((results) async {
       for (ScanResult result in results) {
-        if (result.device.name == targetDeviceName) {
-          print("✅ Znaleziono urządzenie: ${result.device.name}");
+        print("rezultat skanowania:  ${result.device.platformName}");
+        if (result.device.platformName == targetDeviceName) {
+          print("✅ Znaleziono urządzenie: ${result.device.platformName}");
           FlutterBluePlus.stopScan();
 
           _device = result.device;
-          await _device!.connect(timeout: const Duration(seconds: 5));
+          await _device!.connect(timeout: const Duration(seconds: 10));
+          print("✅ Połączono");
 
           await _discoverServicesAndSetCharacteristic();
+          print("✅ ustawiono charakterystyki");
 
           print("⏳ Odczekaj 3 sekundy...");
           await Future.delayed(const Duration(seconds: 3));
 
-          await sendCommand("+++DATA\n"); //tu dać komendę na tryb danych
+          //await sendCommand("+++DATA\n"); //tu dać komendę na tryb danych
         }
       }
     });
   }
 
   Future<void> _discoverServicesAndSetCharacteristic() async {
-    if (_device == null) return;
+    if (_device == null) {
+      print("⚠️ Urządzenie nie jest dostępne.");
+      return;
+    }
 
     List<BluetoothService> services = await _device!.discoverServices();
 
+    final writeUUID = Guid("0000ffe1-0000-1000-8000-00805f9b34fb");
+
     for (var service in services) {
       for (var characteristic in service.characteristics) {
-        if (characteristic.properties.write) {
+        print("🔍 Sprawdzam charakterystykę: ${characteristic.uuid}");
+        if (characteristic.uuid == writeUUID && characteristic.properties.write) {
           _writeChar = characteristic;
-          print("✍️ Charakterystyka zapisu ustawiona.");
+          print("✅ Znaleziono i ustawiono poprawną charakterystykę zapisu: ${characteristic.uuid}");
           return;
         }
       }
@@ -53,18 +64,15 @@ class BluetoothManager {
     print("⚠️ Nie znaleziono odpowiedniej charakterystyki zapisu.");
   }
 
-  bool _ready = false;
 
-  Future<void> sendCommand(String command) async {
+  bool _ready = true;
+
+  Future<void> sendCommand(Int8List command) async {
+    print("🔍 Entering sendCommand with command: $command");
     if (_writeChar == null) return;
-
-    List<int> bytes = utf8.encode(command);
-    await _writeChar!.write(bytes, withoutResponse: true);
+    await _writeChar!.write(command);
     print("📤 Wysłano komendę: $command");
-
-    if (command.trim() == "+++DATA") {
-      _ready = true;
-    }
+    _ready = true;
   }
 
   bool get isReady => _ready;

@@ -7,24 +7,26 @@ class ControlTiltMode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<AppState>(context);
-    final frame = Provider.of<AppState>(context).frame;
+    final appState = Provider.of<AppState>(context, listen: false);
     return Stack(
       children: [
         Align(
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.only(bottom: 30.0),
-            child: SizedBox( // przycisk STOP
+            child: SizedBox(
               width: 137,
               height: 137,
               child: ElevatedButton(
                 onPressed: () {
-                  frame.setX_tilt(0);
-                  frame.setBit(0, true);
-                  frame.setY(0);
-                  print("=========SPEED ${state.speed}=====X ${frame.x}====Y ${frame.y}====K ${frame.buttons&32}=====B ${frame.buttons&1}==== BTN");
-                  print("STOP=================================B ${frame.buttons&1}======================= BTN");
+                  final newFrame = appState.frameNotifier.value.clone();
+                  newFrame.setX_tilt(0);
+                  newFrame.setBit(0, true);
+                  newFrame.setY(0);
+                  appState.frameNotifier.value = newFrame;
+                  appState.notifyListeners();
+                  print("=========SPEED ${appState.speed}=====X ${newFrame.x}====Y ${newFrame.y}====K ${newFrame.buttons & 32}=====B ${newFrame.buttons & 1}==== BTN");
+                  print("STOP=================================B ${newFrame.buttons & 1}======================= BTN");
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF2E00C6),
@@ -44,18 +46,18 @@ class ControlTiltMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk światła
+        Positioned(
           top: 0,
           left: 30.0,
           child: SizedBox(
             width: 57.0,
             height: 57.0,
             child: FloatingActionButton(
-              backgroundColor: state.lightsOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
-              onPressed: () => state.toggleLights(),
+              backgroundColor: appState.lightsOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
+              onPressed: () => appState.toggleLights(),
               shape: const CircleBorder(),
               child: Image.asset(
-                state.lightsOn ? './images/swiatla_on.jpg' : './images/swiatla.jpg',
+                appState.lightsOn ? './images/swiatla_on.jpg' : './images/swiatla.jpg',
                 width: 40,
                 height: 40,
                 fit: BoxFit.contain,
@@ -64,18 +66,18 @@ class ControlTiltMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk awaryjne
+        Positioned(
           top: 72.0,
           left: 30.0,
           child: SizedBox(
             width: 57.0,
             height: 57.0,
             child: FloatingActionButton(
-              backgroundColor: state.hazardsOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
-              onPressed: () => state.toggleHazards(),
+              backgroundColor: appState.hazardsOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
+              onPressed: () => appState.toggleHazards(),
               shape: const CircleBorder(),
               child: Image.asset(
-                state.hazardsOn ? './images/awaryjne_on.jpg' : './images/awaryjne.jpg',
+                appState.hazardsOn ? './images/awaryjne_on.jpg' : './images/awaryjne.jpg',
                 width: 40,
                 height: 40,
                 fit: BoxFit.contain,
@@ -84,7 +86,7 @@ class ControlTiltMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk klakson
+        Positioned(
           top: 0.0,
           right: 30.0,
           child: SizedBox(
@@ -92,16 +94,25 @@ class ControlTiltMode extends StatelessWidget {
             height: 57.0,
             child: GestureDetector(
               onTapDown: (_) {
-                frame.setBit(3, true);
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setBit(3, true);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
                 print("KRZYCZY======================================================================");
-                print("x ${frame.x}, y ${frame.y}");
+                print("x ${newFrame.x}, y ${newFrame.y}");
               },
               onTapUp: (_) {
-                frame.setBit(3, false);
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setBit(3, false);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
                 print("nie krzyczy======================================================================");
               },
               onTapCancel: () {
-                frame.setBit(3, false);
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setBit(3, false);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
                 print("nie krzyczy======================================================================");
               },
               child: FloatingActionButton(
@@ -119,18 +130,18 @@ class ControlTiltMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk drift
+        Positioned(
           top: 72.0,
           right: 30.0,
           child: SizedBox(
             width: 57.0,
             height: 57.0,
             child: FloatingActionButton(
-              backgroundColor: state.driftOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
-              onPressed: () => state.toggleDrift(),
+              backgroundColor: appState.driftOn ? const Color(0xffa75402) : const Color(0xFF1C007A),
+              onPressed: () => appState.toggleDrift(),
               shape: const CircleBorder(),
               child: Image.asset(
-                state.driftOn ? './images/drift_on.jpg' : './images/drift.jpg',
+                appState.driftOn ? './images/drift_on.jpg' : './images/drift.jpg',
                 width: 40,
                 height: 40,
                 fit: BoxFit.contain,
@@ -139,7 +150,7 @@ class ControlTiltMode extends StatelessWidget {
           ),
         ),
 
-        Positioned( // przycisk przód
+        Positioned(
           bottom: 30,
           right: 30,
           child: SizedBox(
@@ -147,11 +158,13 @@ class ControlTiltMode extends StatelessWidget {
             height: 72.0,
             child: ElevatedButton(
               onPressed: () {
-                //state.unblock();
-                frame.setBit(0, false);
-                frame.setBit(5, true);
-                frame.setX(state.speed*10);
-                print("PRZÓD=========SPEED ${state.speed}=====X ${frame.x}====Y ${frame.y}====K ${frame.buttons&32}=====B ${frame.buttons&1}==== BTN");
+                final newFrame = appState.frameNotifier.value.clone();
+                newFrame.setBit(0, false);
+                newFrame.setBit(5, true);
+                newFrame.setX(appState.speed * 10);
+                appState.frameNotifier.value = newFrame;
+                appState.notifyListeners();
+                print("PRZÓD=========SPEED ${appState.speed}=====X ${newFrame.x}====Y ${newFrame.y}====K ${newFrame.buttons & 32}=====B ${newFrame.buttons & 1}==== BTN");
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF00D21B),
