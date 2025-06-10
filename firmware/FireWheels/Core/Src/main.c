@@ -1,3 +1,21 @@
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2025 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+/* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
@@ -8,12 +26,16 @@
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
 #include "nrf24l01p.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/* USER CODE END Includes */
+
 /* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
 typedef enum {
     CONTROL_BLUETOOTH,
     CONTROL_NRF24L01
@@ -26,8 +48,10 @@ typedef struct {
     int8_t right_y;   // Bajt 4
     uint16_t buttons; // Bajty 5-6
 } ControllerData;
+/* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
 #define BUZZ_GPIO_Port GPIOB
 #define BUZZ_Pin GPIO_PIN_8
 #define BTSTATE_GPIO_Port GPIOB
@@ -70,7 +94,16 @@ typedef struct {
 #define NRF24L01P_IRQ_PIN_NUMBER GPIO_PIN_0
 #define NRF24L01P_PAYLOAD_LENGTH 6
 
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
 /* Private variables ---------------------------------------------------------*/
+
+/* USER CODE BEGIN PV */
 ControlMode_t currentMode = CONTROL_NRF24L01;
 osMessageQueueId_t controlQueue;
 uint8_t rx_byte;
@@ -84,7 +117,12 @@ volatile uint32_t echo_start, echo_end;
 volatile uint8_t echo_flag = 0;
 #endif
 
+/* USER CODE END PV */
+
 /* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
+/* USER CODE BEGIN PFP */
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
 void driveMotor(GPIO_TypeDef* IN1_Port, uint16_t IN1_Pin, GPIO_TypeDef* IN2_Port, uint16_t IN2_Pin, TIM_HandleTypeDef* htim, uint32_t Channel, int speed_percent);
@@ -101,8 +139,10 @@ void StatusTask(void *pvParameters);
 #if USE_ULTRASONIC
 void UltrasonicTask(void *pvParameters);
 #endif
+/* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim1;
@@ -110,65 +150,149 @@ extern SPI_HandleTypeDef hspi1;
 extern UART_HandleTypeDef huart1;
 extern ADC_HandleTypeDef hadc1;
 
+/* USER CODE END 0 */
+
 /**
   * @brief  The application entry point.
   * @retval int
   */
 int main(void)
 {
+
+  /* USER CODE BEGIN 1 */
+
+  /* USER CODE END 1 */
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
   SystemClock_Config();
 
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI1_Init();
+  MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM4_Init();
   MX_USART1_UART_Init();
   MX_ADC1_Init();
-  #if USE_ULTRASONIC
-    MX_TIM1_Init();
-  #endif
-
+  /* USER CODE BEGIN 2 */
+#if USE_ULTRASONIC
+  MX_TIM1_Init();
+#endif
   nrf24l01p_rx_init(2402, 0);
 
   controlQueue = osMessageQueueNew(30, sizeof(ControllerData), NULL);
-  const osThreadAttr_t controlTask_attr = {
-      .name = "ControlTask",
-      .priority = osPriorityHigh,
-      .stack_size = 1024
-  };
-  osThreadNew(ControlTask, NULL, &controlTask_attr);
-  osThreadNew(ButtonTask, NULL, NULL);
-  osThreadNew(StatusTask, NULL, NULL);
-  #if USE_ULTRASONIC
-    osThreadNew(UltrasonicTask, NULL, NULL);
-    HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
-  #endif
+    const osThreadAttr_t controlTask_attr = {
+        .name = "ControlTask",
+        .priority = osPriorityHigh,
+        .stack_size = 1024
+    };
+    osThreadNew(ControlTask, NULL, &controlTask_attr);
+    osThreadNew(ButtonTask, NULL, NULL);
+    osThreadNew(StatusTask, NULL, NULL);
+    #if USE_ULTRASONIC
+      osThreadNew(UltrasonicTask, NULL, NULL);
+      HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
+    #endif
 
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
-  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
+    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
 
-  driveMotor(M1IN1_GPIO_Port, M1IN1_Pin, M1IN2_GPIO_Port, M1IN2_Pin, &htim2, TIM_CHANNEL_1, 0);
-  driveMotor(M2IN1_GPIO_Port, M2IN1_Pin, M2IN2_GPIO_Port, M2IN2_Pin, &htim2, TIM_CHANNEL_2, 0);
-  driveMotor(M3IN1_GPIO_Port, M3IN1_Pin, M3IN2_GPIO_Port, M3IN2_Pin, &htim2, TIM_CHANNEL_3, 0);
-  driveMotor(M4IN1_GPIO_Port, M4IN1_Pin, M4IN2_GPIO_Port, M4IN2_Pin, &htim2, TIM_CHANNEL_4, 0);
-  SG90_SetAngle(90);
+    driveMotor(M1IN1_GPIO_Port, M1IN1_Pin, M1IN2_GPIO_Port, M1IN2_Pin, &htim2, TIM_CHANNEL_1, 0);
+    driveMotor(M2IN1_GPIO_Port, M2IN1_Pin, M2IN2_GPIO_Port, M2IN2_Pin, &htim2, TIM_CHANNEL_2, 0);
+    driveMotor(M3IN1_GPIO_Port, M3IN1_Pin, M3IN2_GPIO_Port, M3IN2_Pin, &htim2, TIM_CHANNEL_3, 0);
+    driveMotor(M4IN1_GPIO_Port, M4IN1_Pin, M4IN2_GPIO_Port, M4IN2_Pin, &htim2, TIM_CHANNEL_4, 0);
+    SG90_SetAngle(90);
+  /* USER CODE END 2 */
 
+  /* Init scheduler */
   osKernelInitialize();
+
+  /* Call init function for freertos objects (in cmsis_os2.c) */
+  MX_FREERTOS_Init();
+
+  /* Start scheduler */
   osKernelStart();
 
+  /* We should never get here as control is now taken by the scheduler */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+  }
+  /* USER CODE END 3 */
+}
+
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
   }
 }
 
+/* USER CODE BEGIN 4 */
 void ControlTask(void *pvParameters) {
     ControllerData data;
     while (1) {
-        // Sprawdź, czy minęło 100 ms od ostatniego pakietu
+         //Sprawdź, czy minęło 100 ms od ostatniego pakietu
         if (HAL_GetTick() - lastDataTime > 100) {
             // Zeruj controlData i zatrzymaj silniki
             controlData.left_x = 0;
@@ -188,23 +312,46 @@ void ControlTask(void *pvParameters) {
 
         // Czekaj na nowy pakiet z kolejki
         if (osMessageQueueGet(controlQueue, &data, NULL, 0) == osOK) {
+        	if(currentMode == CONTROL_NRF24L01){
+        		controlData = data;
+				lastDataTime = HAL_GetTick();
+
+				// Sterowanie robotem
+				int speed = controlData.left_y;
+				int angle = (controlData.right_x + 100) * 180 / 200;
+
+				SG90_SetAngle((uint8_t)angle);
+				driveMotor(M1IN1_GPIO_Port, M1IN1_Pin, M1IN2_GPIO_Port, M1IN2_Pin, &htim2, TIM_CHANNEL_1, speed * -1);
+				driveMotor(M2IN1_GPIO_Port, M2IN1_Pin, M2IN2_GPIO_Port, M2IN2_Pin, &htim2, TIM_CHANNEL_2, speed * -1);
+				driveMotor(M3IN1_GPIO_Port, M3IN1_Pin, M3IN2_GPIO_Port, M3IN2_Pin, &htim2, TIM_CHANNEL_3, speed);
+				driveMotor(M4IN1_GPIO_Port, M4IN1_Pin, M4IN2_GPIO_Port, M4IN2_Pin, &htim2, TIM_CHANNEL_4, speed);
+
+				LED_Brake(speed <= 0 ? 1 : 0);
+				LED_Front(controlData.buttons & 0x01 ? 1 : 0);
+				HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, (controlData.buttons & 0x02) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        	}
+        	else{
+        		controlData = data;
+				lastDataTime = HAL_GetTick();
+
+				// Sterowanie robotem
+				int speed = controlData.left_x;
+				int angle = (controlData.left_y + 100) * 180 / 200;
+
+				SG90_SetAngle((uint8_t)angle);
+				driveMotor(M1IN1_GPIO_Port, M1IN1_Pin, M1IN2_GPIO_Port, M1IN2_Pin, &htim2, TIM_CHANNEL_1, speed * -1);
+				driveMotor(M2IN1_GPIO_Port, M2IN1_Pin, M2IN2_GPIO_Port, M2IN2_Pin, &htim2, TIM_CHANNEL_2, speed * -1);
+				driveMotor(M3IN1_GPIO_Port, M3IN1_Pin, M3IN2_GPIO_Port, M3IN2_Pin, &htim2, TIM_CHANNEL_3, speed);
+				driveMotor(M4IN1_GPIO_Port, M4IN1_Pin, M4IN2_GPIO_Port, M4IN2_Pin, &htim2, TIM_CHANNEL_4, speed);
+
+				LED_Brake(speed <= 0 ? 1 : 0);
+				LED_Front(controlData.buttons & 0x01 ? 1 : 0);
+				HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, (controlData.buttons & 0x02) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        	}
+
+
             // Aktualizuj controlData
-            controlData = data;
-            lastDataTime = HAL_GetTick();
 
-            // Sterowanie robotem
-            int speed = controlData.left_y;
-            int angle = (controlData.right_x + 100) * 180 / 200;
-
-            SG90_SetAngle((uint8_t)angle);
-            driveMotor(M1IN1_GPIO_Port, M1IN1_Pin, M1IN2_GPIO_Port, M1IN2_Pin, &htim2, TIM_CHANNEL_1, speed * -1);
-            driveMotor(M2IN1_GPIO_Port, M2IN1_Pin, M2IN2_GPIO_Port, M2IN2_Pin, &htim2, TIM_CHANNEL_2, speed * -1);
-            driveMotor(M3IN1_GPIO_Port, M3IN1_Pin, M3IN2_GPIO_Port, M3IN2_Pin, &htim2, TIM_CHANNEL_3, speed);
-            driveMotor(M4IN1_GPIO_Port, M4IN1_Pin, M4IN2_GPIO_Port, M4IN2_Pin, &htim2, TIM_CHANNEL_4, speed);
-
-            LED_Brake(speed <= 0 ? 1 : 0);
-            LED_Front(controlData.buttons & 0x01 ? 1 : 0);
-            HAL_GPIO_WritePin(BUZZ_GPIO_Port, BUZZ_Pin, (controlData.buttons & 0x02) ? GPIO_PIN_SET : GPIO_PIN_RESET);
         }
 
         osDelay(10); // Krótkie opóźnienie, aby nie obciążać procesora
@@ -329,7 +476,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
             osMessageQueuePut(controlQueue, &data, 0, 0);
             bt_rx_index = 0;
         }
-        HAL_UART_Receive_IT(&huart1, &rx_byte, 1);
+        if(HAL_UART_Receive_IT(&huart1, &rx_byte, 1) == HAL_OK){
+        	LED_Front(1);
+        }
+        else{
+        	LED_Brake(1);
+        };
     }
 }
 
@@ -380,59 +532,28 @@ void LED_Signal(uint8_t on) {
 uint8_t Button_IsPressed(void) {
     return HAL_GPIO_ReadPin(BTN_GPIO_Port, BTN_Pin) == GPIO_PIN_RESET;
 }
-
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
-{
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
-
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
-  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
-    Error_Handler();
-  }
-}
+/* USER CODE END 4 */
 
 /**
   * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM3 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
   * @param  htim : TIM handle
   * @retval None
   */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
   if (htim->Instance == TIM3)
   {
     HAL_IncTick();
   }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
 }
 
 /**
@@ -441,10 +562,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   */
 void Error_Handler(void)
 {
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
   {
   }
+  /* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
@@ -457,5 +581,9 @@ void Error_Handler(void)
   */
 void assert_failed(uint8_t *file, uint32_t line)
 {
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
